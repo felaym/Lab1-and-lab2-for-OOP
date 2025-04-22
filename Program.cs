@@ -28,6 +28,7 @@ public class GameField
     public int Height { get; }
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
+    public int Score { get; private set; }
 
     public GameField(int width, int height)
     {
@@ -89,6 +90,7 @@ public class GameField
             }
             Console.WriteLine();
         }
+        Console.WriteLine($"Score: {Score}");
     }
 
     public bool TryMovePlayer(int deltaX, int deltaY)
@@ -96,8 +98,13 @@ public class GameField
         int newX = PlayerX + deltaX;
         int newY = PlayerY + deltaY;
 
-        if (!IsWithinBounds(newX, newY) || _grid[newX, newY] is Wall)
-            return false;
+        if (!IsWithinBounds(newX, newY)) return false;
+        if (_grid[newX, newY] is Wall) return false;
+
+        if (_grid[newX, newY] is Prize)
+        {
+            Score++;
+        }
 
         _grid[PlayerX, PlayerY] = null;
         PlayerX = newX;
