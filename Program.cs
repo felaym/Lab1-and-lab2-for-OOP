@@ -34,6 +34,17 @@ public class GameField
         Width = width;
         Height = height;
         _grid = new GameObject[width, height];
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
+                {
+                    _grid[x, y] = new Wall();
+                }
+            }
+        }
     }
 
     public void PlaceObject(GameObject gameObject, int x, int y)
@@ -101,10 +112,25 @@ public static class Program
 {
     public static void Main()
     {
-        GameField field = new GameField(8, 8);
-        field.PlaceObject(new Player(), 0, 0);
+        GameField field = new GameField(10, 10);
+
+        field.PlaceObject(new Player(), 1, 1);
+
         field.PlaceObject(new Wall(), 2, 2);
+        field.PlaceObject(new Wall(), 3, 3);
+        field.PlaceObject(new Wall(), 4, 4);
+        field.PlaceObject(new Wall(), 5, 5);
+        field.PlaceObject(new Wall(), 7, 3);
+        field.PlaceObject(new Wall(), 6, 6);
+        field.PlaceObject(new Wall(), 2, 7);
+        field.PlaceObject(new Wall(), 5, 2);
+
         field.PlaceObject(new Prize(), 6, 5);
+        field.PlaceObject(new Prize(), 3, 4);
+        field.PlaceObject(new Prize(), 2, 6);
+        field.PlaceObject(new Prize(), 8, 8);
+        field.PlaceObject(new Prize(), 4, 7);
+        field.PlaceObject(new Prize(), 1, 8);
 
         bool isRunning = true;
         while (isRunning)
