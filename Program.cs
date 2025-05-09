@@ -3,6 +3,7 @@
 public abstract class GameObject
 {
     public abstract char Symbol { get; }
+    protected virtual string Name { get; set; } = "GameObject";
 }
 
 public class Player : GameObject
@@ -22,8 +23,8 @@ public class Prize : GameObject
 
 public class GameField
 {
-    private readonly GameObject[,] _grid;
-    private Player _player;
+    protected readonly GameObject[,] _grid;
+    protected Player _player;
     public int Width { get; }
     public int Height { get; }
     public int PlayerX { get; private set; }
@@ -77,7 +78,7 @@ public class GameField
         }
     }
 
-    private bool IsWithinBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
+    protected bool IsWithinBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
 
     public void Display()
     {
