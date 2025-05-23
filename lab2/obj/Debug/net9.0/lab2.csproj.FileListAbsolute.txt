@@ -1,0 +1,7 @@
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.Resources.resources
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.csproj.GenerateResource.cache
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.csproj.AssemblyReference.cache
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.AssemblyInfoInputs.cache
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.AssemblyInfo.cs
+C:\Users\artem\OneDrive\Desktop\lab2\obj\Debug\net9.0\lab2.csproj.CoreCompileInputs.cache
