@@ -185,18 +185,18 @@ public partial class MainForm : Form
     private void InitializeGame()
     {
         _gameField.PlaceObject(new Player(), 1, 1);
-        
+
         for (int x = 2; x < _gameField.Width - 2; x += 2)
         {
             _gameField.PlaceObject(new Wall(), x, 2);
             _gameField.PlaceObject(new Wall(), x, _gameField.Height - 3);
         }
-        
+
         for (int i = 3; i < 7; i++)
         {
             _gameField.PlaceObject(new Wall(), i, i);
         }
-        
+
         Random rand = new Random();
         for (int i = 0; i < 10; i++)
         {
@@ -205,9 +205,9 @@ public partial class MainForm : Form
             {
                 x = rand.Next(1, _gameField.Width - 1);
                 y = rand.Next(1, _gameField.Height - 1);
-            } 
+            }
             while (_gameField.GetTopObject(x, y) != null);
-            
+
             _gameField.PlaceObject(new Prize(), x, y);
         }
     }
