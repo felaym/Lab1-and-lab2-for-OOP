@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Diagnostics;
 
 public abstract class GameObject
 {
@@ -35,12 +37,15 @@ public class GameField
     public int Width { get; }
     public int Height { get; }
     public int Score { get; private set; }
+    public int TotalPrizes { get; private set; }
+    private Stopwatch _gameTimer;
 
     public GameField(int width, int height)
     {
         Width = width;
         Height = height;
         _grid = new GameObject[width, height];
+        _gameTimer = new Stopwatch();
 
         for (int x = 0; x < width; x++)
         {
@@ -69,6 +74,12 @@ public class GameField
             _player = player;
             _player.X = x;
             _player.Y = y;
+            _gameTimer.Start();
+        }
+
+        if (gameObject is Prize)
+        {
+            TotalPrizes++;
         }
 
         if (IsWithinBounds(x, y))
@@ -100,7 +111,8 @@ public class GameField
             }
             Console.WriteLine();
         }
-        Console.WriteLine($"Score: {Score}");
+        Console.WriteLine($"Score: {Score}/{TotalPrizes}");
+        Console.WriteLine($"Time: {_gameTimer.Elapsed:mm\\:ss}");
     }
 
     public bool TryMovePlayer(int deltaX, int deltaY)
@@ -121,7 +133,34 @@ public class GameField
         _player.Y = newY;
         _grid[_player.X, _player.Y] = _player;
 
+        if (Score >= TotalPrizes)
+        {
+            _gameTimer.Stop();
+            SaveGameResult();
+            Console.WriteLine("Вітаю! Ви зібрали всі призи:)!");
+            Console.WriteLine($"У вас це зайняло: {_gameTimer.Elapsed:mm\\:ss}");
+            Console.WriteLine("Натисніть esc...");
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
+
         return true;
+    }
+
+    private void SaveGameResult()
+    {
+        string fileName = "game_results.txt";
+        string result = $"{DateTime.Now}: Зібрав {Score} призів за {_gameTimer.Elapsed:mm\\:ss}";
+
+        try
+        {
+            File.AppendAllText(fileName, result + Environment.NewLine);
+            Console.WriteLine($"Результат гри збережено до {fileName}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Помилка при збереженні результатів гри: {ex.Message}");
+        }
     }
 }
 
