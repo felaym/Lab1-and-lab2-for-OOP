@@ -20,6 +20,15 @@ public class Player : GameObject
     public override Image Texture => _texture;
 }
 
+public class Finish : GameObject
+{
+    private static Image _texture = Image.FromFile("Resources/player.png");
+    public override Color Color => Color.CornflowerBlue;
+    public override int ZIndex => 2;
+    public override string Name => "Player";
+    public override Image Texture => _texture;
+}
+
 public class Wall : GameObject
 {
     private static Image _texture = Image.FromFile("Resources/wall.png");
@@ -40,7 +49,6 @@ public class Prize : GameObject
 
 public class GameField
 {
-    public event EventHandler Updated = delegate { };
     public event EventHandler ScoreChanged = delegate { };
 
     private readonly GameObject[,,] _layers;
@@ -80,14 +88,15 @@ public class GameField
             {
                 if (x == 0 || x == Width - 1 || y == 0 || y == Height - 1)
                 {
-                    PlaceObject(new Wall(), x, y, 1);
+                    PlaceObject(new Wall(), x, y);
                 }
             }
         }
     }
 
-    public void PlaceObject(GameObject gameObject, int x, int y, int layer = 1)
+    public void PlaceObject(GameObject gameObject, int x, int y)
     {
+        int layer = 1;
         if (gameObject is Player player)
         {
             if (_player != null)
@@ -103,7 +112,6 @@ public class GameField
         if (IsWithinBounds(x, y))
         {
             _layers[x, y, layer] = gameObject;
-            Updated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -146,7 +154,6 @@ public class GameField
         PlayerY = newY;
         _layers[PlayerX, PlayerY, 2] = _player;
 
-        Updated?.Invoke(this, EventArgs.Empty);
         return true;
     }
 }

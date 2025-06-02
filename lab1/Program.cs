@@ -3,12 +3,19 @@
 public abstract class GameObject
 {
     public abstract char Symbol { get; }
-    protected virtual string Name { get; set; } = "GameObject";
+}
+
+public class EmptyCell : GameObject
+{
+    public override char Symbol => '.';
 }
 
 public class Player : GameObject
 {
     public override char Symbol => 'P';
+
+    public int X { get; set; }
+    public int Y { get; set; }
 }
 
 public class Wall : GameObject
@@ -27,8 +34,6 @@ public class GameField
     protected Player _player;
     public int Width { get; }
     public int Height { get; }
-    public int PlayerX { get; private set; }
-    public int PlayerY { get; private set; }
     public int Score { get; private set; }
 
     public GameField(int width, int height)
@@ -45,6 +50,10 @@ public class GameField
                 {
                     _grid[x, y] = new Wall();
                 }
+                else
+                {
+                    _grid[x, y] = new EmptyCell();
+                }
             }
         }
     }
@@ -55,11 +64,11 @@ public class GameField
         {
             if (_player != null)
             {
-                _grid[PlayerX, PlayerY] = null;
+                _grid[_player.X, _player.Y] = new EmptyCell();
             }
             _player = player;
-            PlayerX = x;
-            PlayerY = y;
+            _player.X = x;
+            _player.Y = y;
         }
 
         if (IsWithinBounds(x, y))
@@ -87,7 +96,7 @@ public class GameField
         {
             for (int x = 0; x < Width; x++)
             {
-                Console.Write((_grid[x, y]?.Symbol ?? '.') + " ");
+                Console.Write(_grid[x, y].Symbol + " ");
             }
             Console.WriteLine();
         }
@@ -96,8 +105,8 @@ public class GameField
 
     public bool TryMovePlayer(int deltaX, int deltaY)
     {
-        int newX = PlayerX + deltaX;
-        int newY = PlayerY + deltaY;
+        int newX = _player.X + deltaX;
+        int newY = _player.Y + deltaY;
 
         if (!IsWithinBounds(newX, newY)) return false;
         if (_grid[newX, newY] is Wall) return false;
@@ -107,10 +116,10 @@ public class GameField
             Score++;
         }
 
-        _grid[PlayerX, PlayerY] = null;
-        PlayerX = newX;
-        PlayerY = newY;
-        _grid[PlayerX, PlayerY] = _player;
+        _grid[_player.X, _player.Y] = new EmptyCell();
+        _player.X = newX;
+        _player.Y = newY;
+        _grid[_player.X, _player.Y] = _player;
 
         return true;
     }
