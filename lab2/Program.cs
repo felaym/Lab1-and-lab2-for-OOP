@@ -7,7 +7,6 @@ public abstract class GameObject
 {
     public virtual Color Color { get; } = Color.Gray;
     public virtual int ZIndex { get; } = 0;
-    public virtual string Name { get; protected set; } = "GameObject";
     public virtual Image? Texture { get; } = null;
 }
 
@@ -16,7 +15,6 @@ public class Player : GameObject
     private static Image _texture = Image.FromFile("Resources/player.png");
     public override Color Color => Color.CornflowerBlue;
     public override int ZIndex => 2;
-    public override string Name => "Player";
     public override Image Texture => _texture;
 }
 
@@ -25,7 +23,6 @@ public class Finish : GameObject
     private static Image _texture = Image.FromFile("Resources/player.png");
     public override Color Color => Color.CornflowerBlue;
     public override int ZIndex => 2;
-    public override string Name => "Player";
     public override Image Texture => _texture;
 }
 
@@ -34,7 +31,6 @@ public class Wall : GameObject
     private static Image _texture = Image.FromFile("Resources/wall.png");
     public override Color Color => Color.DimGray;
     public override int ZIndex => 1;
-    public override string Name => "Wall";
     public override Image Texture => _texture;
 }
 
@@ -43,7 +39,6 @@ public class Prize : GameObject
     private static Image _texture = Image.FromFile("Resources/star.png");
     public override Color Color => Color.Gold;
     public override int ZIndex => 1;
-    public override string Name => "Prize";
     public override Image Texture => _texture;
 }
 
