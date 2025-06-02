@@ -194,27 +194,13 @@ public static class Program
             field.Display();
             ConsoleKeyInfo key = Console.ReadKey(true);
 
-            switch (key.Key)
+            if (KeyBindings.MovementKeys.TryGetValue(key.Key, out var move))
             {
-                case ConsoleKey.UpArrow:
-                case ConsoleKey.W:
-                    field.TryMovePlayer(0, -1);
-                    break;
-                case ConsoleKey.DownArrow:
-                case ConsoleKey.S:
-                    field.TryMovePlayer(0, 1);
-                    break;
-                case ConsoleKey.LeftArrow:
-                case ConsoleKey.A:
-                    field.TryMovePlayer(-1, 0);
-                    break;
-                case ConsoleKey.RightArrow:
-                case ConsoleKey.D:
-                    field.TryMovePlayer(1, 0);
-                    break;
-                case ConsoleKey.Escape:
-                    isRunning = false;
-                    break;
+                field.TryMovePlayer(move.dx, move.dy);
+            }
+            else if (key.Key == ConsoleKey.Escape)
+            {
+                isRunning = false;
             }
         }
     }
