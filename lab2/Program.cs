@@ -83,7 +83,7 @@ public class Prize : GameObject
 
 public class GameField
 {
-    public event EventHandler ScoreChanged = delegate { };
+    public event Action<int> ScoreChanged = delegate { };
     public event EventHandler GameFinished = delegate { };
 
     private readonly List<GameObject>[,] _objects;
@@ -105,7 +105,7 @@ public class GameField
         private set
         {
             _score = value;
-            ScoreChanged?.Invoke(this, EventArgs.Empty);
+            ScoreChanged?.Invoke(_score);
         }
     }
 
@@ -333,9 +333,9 @@ public partial class MainForm : Form
         lblScore.BackColor = Color.Transparent;
         lblScore.Text = "SCORE: 0";
 
-        _gameField.ScoreChanged += (s, e) =>
+        _gameField.ScoreChanged += score =>
         {
-            lblScore.Text = $"SCORE: {_gameField.Score} / {_gameField.GetTotalPrizes()}";
+            lblScore.Text = $"SCORE: {score} / {_gameField.GetTotalPrizes()}";
         };
     }
 
