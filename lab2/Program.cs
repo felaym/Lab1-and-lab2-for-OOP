@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Timer = System.Windows.Forms.Timer;
+using System.Diagnostics;
 
 public abstract class GameObject
 {
@@ -55,6 +56,8 @@ public class GameField
     public int PlayerX { get; private set; }
     public int PlayerY { get; private set; }
 
+    private Stopwatch _gameTimer;
+
     private int _score;
     public int Score
     {
@@ -77,7 +80,11 @@ public class GameField
                 _objects[x, y] = new List<GameObject>();
 
         InitializeWalls();
+
+        _gameTimer = new Stopwatch();
     }
+
+    public TimeSpan GetGameTime() => _gameTimer.Elapsed;
 
     private void InitializeWalls()
     {
@@ -129,6 +136,11 @@ public class GameField
 
     public bool TryMovePlayer(int deltaX, int deltaY)
     {
+        if (!_gameTimer.IsRunning)
+        {
+            _gameTimer.Start();
+        }
+
         int newX = PlayerX + deltaX;
         int newY = PlayerY + deltaY;
 
@@ -175,6 +187,9 @@ public partial class MainForm : Form
         KeyPreview = true;
         BackColor = Color.FromArgb(30, 30, 30);
 
+        lblScore = new Label();
+        Controls.Add(lblScore);
+
         _gameField = new GameField(10, 10);
         _gameTimer = new Timer { Interval = 16 };
         _gameTimer.Tick += (s, e) => Invalidate();
@@ -191,9 +206,39 @@ public partial class MainForm : Form
         Invalidate();
     }
 
+    private void SaveGameResult()
+    {
+        string fileName = "game_results.txt";
+        string result = $"{DateTime.Now}: Зібрано {_gameField.Score} призів за {_gameField.GetGameTime():mm\\:ss}";
+
+        try
+        {
+            File.AppendAllText(fileName, result + Environment.NewLine);
+            MessageBox.Show($"Результат гри збережено до {fileName}", "Гру завершено",
+                          MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Помилка при збереженні результатів гри: {ex.Message}", "Помилка",
+                          MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
     private void InitializeGame()
     {
         _gameField.PlaceObject(new Player(), 1, 1);
+
+        _gameField.ScoreChanged += (s, e) =>
+        {
+            if (_gameField.Score >= 10)
+            {
+                _gameTimer.Stop();
+                SaveGameResult();
+                MessageBox.Show($"Вітаю! Ви зібрали всі призи за {_gameField.GetGameTime():mm\\:ss}!",
+                "Перемога!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
+            }
+        };
 
         for (int x = 2; x < _gameField.Width - 2; x += 2)
         {
@@ -312,17 +357,19 @@ public partial class MainForm : Form
     private void InitializeComponent()
     {
         this.lblScore = new Label();
-        SuspendLayout();
+        this.SuspendLayout();
 
         this.lblScore.AutoSize = true;
+        this.lblScore.ForeColor = Color.Gold;
         this.lblScore.Location = new Point(10, 10);
-        this.lblScore.TabIndex = 0;
+        this.lblScore.Font = new Font("Consolas", 14, FontStyle.Bold);
+        this.lblScore.BackColor = Color.Transparent;
 
-        ClientSize = new Size(500, 500);
-        Controls.Add(this.lblScore);
-        Name = "MainForm";
-        ResumeLayout(false);
-        PerformLayout();
+        this.ClientSize = new Size(500, 500);
+        this.Controls.Add(this.lblScore);
+        this.Name = "MainForm";
+        this.ResumeLayout(false);
+        this.PerformLayout();
     }
     #endregion
 }
