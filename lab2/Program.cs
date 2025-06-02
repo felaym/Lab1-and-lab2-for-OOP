@@ -3,12 +3,18 @@ using System.Drawing;
 using System.Windows.Forms;
 using Timer = System.Windows.Forms.Timer;
 using System.Diagnostics;
+using System.Linq;
+using System.IO;
 
 public abstract class GameObject
 {
     public virtual Color Color { get; } = Color.Gray;
     public virtual int ZIndex { get; } = 0;
     public virtual Image? Texture { get; } = null;
+
+    public abstract bool CanStepOn(GameField gameField);
+
+    public abstract void OnPlayerInteraction(GameField gameField);
 }
 
 public class Player : GameObject
@@ -17,14 +23,33 @@ public class Player : GameObject
     public override Color Color => Color.CornflowerBlue;
     public override int ZIndex => 2;
     public override Image Texture => _texture;
+
+    public override bool CanStepOn(GameField gameField) => true;
+
+    public override void OnPlayerInteraction(GameField gameField)
+    {
+    }
 }
 
 public class Finish : GameObject
 {
-    private static Image _texture = Image.FromFile("Resources/player.png");
+    private static Image _texture = Image.FromFile("Resources/finish.png");
     public override Color Color => Color.CornflowerBlue;
-    public override int ZIndex => 2;
+    public override int ZIndex => 10;
     public override Image Texture => _texture;
+
+    public override bool CanStepOn(GameField gameField)
+    {
+        return gameField.Score >= gameField.GetTotalPrizes();
+    }
+
+    public override void OnPlayerInteraction(GameField gameField)
+    {
+        if (CanStepOn(gameField))
+        {
+            gameField.OnGameFinished();
+        }
+    }
 }
 
 public class Wall : GameObject
@@ -33,6 +58,12 @@ public class Wall : GameObject
     public override Color Color => Color.DimGray;
     public override int ZIndex => 1;
     public override Image Texture => _texture;
+
+    public override bool CanStepOn(GameField gameField) => false;
+
+    public override void OnPlayerInteraction(GameField gameField)
+    {
+    }
 }
 
 public class Prize : GameObject
@@ -41,14 +72,23 @@ public class Prize : GameObject
     public override Color Color => Color.Gold;
     public override int ZIndex => 1;
     public override Image Texture => _texture;
+
+    public override bool CanStepOn(GameField gameField) => true;
+
+    public override void OnPlayerInteraction(GameField gameField)
+    {
+        gameField.CollectPrize(this);
+    }
 }
 
 public class GameField
 {
     public event EventHandler ScoreChanged = delegate { };
+    public event EventHandler GameFinished = delegate { };
 
     private readonly List<GameObject>[,] _objects;
     private Player _player = null!;
+    private int _totalPrizes = 0;
 
     public int Width { get; }
     public int Height { get; }
@@ -86,6 +126,19 @@ public class GameField
 
     public TimeSpan GetGameTime() => _gameTimer.Elapsed;
 
+    public int GetTotalPrizes() => _totalPrizes;
+
+    public void OnGameFinished()
+    {
+        GameFinished?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void CollectPrize(Prize prize)
+    {
+        RemoveObject(prize, PlayerX, PlayerY);
+        Score++;
+    }
+
     private void InitializeWalls()
     {
         for (int x = 0; x < Width; x++)
@@ -112,6 +165,11 @@ public class GameField
             _player = player;
             PlayerX = x;
             PlayerY = y;
+        }
+
+        if (gameObject is Prize)
+        {
+            _totalPrizes++;
         }
 
         _objects[x, y].Add(gameObject);
@@ -146,20 +204,23 @@ public class GameField
 
         if (!IsWithinBounds(newX, newY)) return false;
 
-        var topObj = GetTopObject(newX, newY);
-        if (topObj is Wall) return false;
+        var objectsAtCell = _objects[newX, newY].ToList();
 
-        var prize = _objects[newX, newY].FirstOrDefault(o => o is Prize);
-        if (prize != null)
+        foreach (var obj in objectsAtCell)
         {
-            RemoveObject(prize, newX, newY);
-            Score++;
+            if (!obj.CanStepOn(this))
+                return false;
         }
 
         RemoveObject(_player, PlayerX, PlayerY);
         PlayerX = newX;
         PlayerY = newY;
         PlaceObject(_player, PlayerX, PlayerY);
+
+        foreach (var obj in objectsAtCell)
+        {
+            obj.OnPlayerInteraction(this);
+        }
 
         return true;
     }
@@ -215,12 +276,12 @@ public partial class MainForm : Form
         {
             File.AppendAllText(fileName, result + Environment.NewLine);
             MessageBox.Show($"Результат гри збережено до {fileName}", "Гру завершено",
-                          MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Помилка при збереженні результатів гри: {ex.Message}", "Помилка",
-                          MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -228,16 +289,15 @@ public partial class MainForm : Form
     {
         _gameField.PlaceObject(new Player(), 1, 1);
 
-        _gameField.ScoreChanged += (s, e) =>
+        _gameField.PlaceObject(new Finish(), _gameField.Width - 2, _gameField.Height - 2);
+
+        _gameField.GameFinished += (s, e) =>
         {
-            if (_gameField.Score >= 10)
-            {
-                _gameTimer.Stop();
-                SaveGameResult();
-                MessageBox.Show($"Вітаю! Ви зібрали всі призи за {_gameField.GetGameTime():mm\\:ss}!",
-                "Перемога!", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Close();
-            }
+            _gameTimer.Stop();
+            SaveGameResult();
+            MessageBox.Show($"Вітаю! Ви завершили гру за {_gameField.GetGameTime():mm\\:ss}!",
+            "Перемога!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Close();
         };
 
         for (int x = 2; x < _gameField.Width - 2; x += 2)
@@ -275,7 +335,7 @@ public partial class MainForm : Form
 
         _gameField.ScoreChanged += (s, e) =>
         {
-            lblScore.Text = $"SCORE: {_gameField.Score}";
+            lblScore.Text = $"SCORE: {_gameField.Score} / {_gameField.GetTotalPrizes()}";
         };
     }
 
@@ -361,6 +421,7 @@ public partial class MainForm : Form
     }
     #endregion
 }
+
 static class Program
 {
     [STAThread]
