@@ -278,30 +278,18 @@ public partial class MainForm : Form
             lblScore.Text = $"SCORE: {_gameField.Score}";
         };
     }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        switch (e.KeyCode)
+
+        if (KeyBindings.MovementKeys.TryGetValue(e.KeyCode, out var move))
         {
-            case Keys.W:
-            case Keys.Up:
-                _gameField.TryMovePlayer(0, -1);
-                break;
-            case Keys.S:
-            case Keys.Down:
-                _gameField.TryMovePlayer(0, 1);
-                break;
-            case Keys.A:
-            case Keys.Left:
-                _gameField.TryMovePlayer(-1, 0);
-                break;
-            case Keys.D:
-            case Keys.Right:
-                _gameField.TryMovePlayer(1, 0);
-                break;
-            case Keys.Escape:
-                Close();
-                break;
+            _gameField.TryMovePlayer(move.dx, move.dy);
+        }
+        else if (e.KeyCode == Keys.Escape)
+        {
+            Close();
         }
     }
 
