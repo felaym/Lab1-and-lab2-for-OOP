@@ -46,7 +46,7 @@ public class GameField
 {
     public event EventHandler ScoreChanged = delegate { };
 
-    private readonly GameObject[,,] _layers;
+    private readonly List<GameObject>[,] _objects;
     private Player _player = null!;
 
     public int Width { get; }
@@ -70,7 +70,11 @@ public class GameField
     {
         Width = width;
         Height = height;
-        _layers = new GameObject[width, height, 3];
+        _objects = new List<GameObject>[width, height];
+
+        for (int x = 0; x < Width; x++)
+            for (int y = 0; y < Height; y++)
+                _objects[x, y] = new List<GameObject>();
 
         InitializeWalls();
     }
@@ -91,33 +95,34 @@ public class GameField
 
     public void PlaceObject(GameObject gameObject, int x, int y)
     {
-        int layer = 1;
+        if (!IsWithinBounds(x, y)) return;
+
         if (gameObject is Player player)
         {
             if (_player != null)
-            {
-                _layers[PlayerX, PlayerY, 2] = null;
-            }
+                RemoveObject(_player, PlayerX, PlayerY);
+
             _player = player;
             PlayerX = x;
             PlayerY = y;
-            layer = 2;
         }
 
+        _objects[x, y].Add(gameObject);
+        _objects[x, y].Sort((a, b) => a.ZIndex.CompareTo(b.ZIndex));
+    }
+
+    public void RemoveObject(GameObject obj, int x, int y)
+    {
         if (IsWithinBounds(x, y))
-        {
-            _layers[x, y, layer] = gameObject;
-        }
+            _objects[x, y].Remove(obj);
     }
 
     public GameObject? GetTopObject(int x, int y)
     {
-        for (int layer = 2; layer >= 0; layer--)
-        {
-            var obj = _layers[x, y, layer];
-            if (obj != null) return obj;
-        }
-        return null;
+        if (!IsWithinBounds(x, y)) return null;
+        if (_objects[x, y].Count == 0) return null;
+
+        return _objects[x, y][^1];
     }
 
     public bool IsWithinBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
@@ -128,28 +133,30 @@ public class GameField
         int newY = PlayerY + deltaY;
 
         if (!IsWithinBounds(newX, newY)) return false;
-        if (GetTopObject(newX, newY) is Wall) return false;
 
-        GameObject? topObj = GetTopObject(newX, newY);
-        if (topObj is Prize)
+        var topObj = GetTopObject(newX, newY);
+        if (topObj is Wall) return false;
+
+        var prize = _objects[newX, newY].FirstOrDefault(o => o is Prize);
+        if (prize != null)
         {
+            RemoveObject(prize, newX, newY);
             Score++;
-            for (int layer = 0; layer < 3; layer++)
-            {
-                if (_layers[newX, newY, layer] is Prize)
-                {
-                    _layers[newX, newY, layer] = null;
-                    break;
-                }
-            }
         }
 
-        _layers[PlayerX, PlayerY, 2] = null;
+        RemoveObject(_player, PlayerX, PlayerY);
         PlayerX = newX;
         PlayerY = newY;
-        _layers[PlayerX, PlayerY, 2] = _player;
+        PlaceObject(_player, PlayerX, PlayerY);
 
         return true;
+    }
+
+    public IEnumerable<GameObject> GetObjectsAt(int x, int y)
+    {
+        if (IsWithinBounds(x, y))
+            return _objects[x, y];
+        return Enumerable.Empty<GameObject>();
     }
 }
 
@@ -276,12 +283,10 @@ public partial class MainForm : Form
             for (int y = 0; y < _gameField.Height; y++)
             {
                 var rect = new Rectangle(x * cellSize, y * cellSize, cellSize, cellSize);
-
                 using (var brush = new SolidBrush(Color.FromArgb(50, 50, 50)))
                     g.FillRectangle(brush, rect);
 
-                var obj = _gameField.GetTopObject(x, y);
-                if (obj != null)
+                foreach (var obj in _gameField.GetObjectsAt(x, y).OrderBy(o => o.ZIndex))
                 {
                     if (obj.Texture != null)
                         g.DrawImage(obj.Texture, rect);
